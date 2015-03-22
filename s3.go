@@ -1,4 +1,4 @@
-package main
+package mixpanels3
 
 import (
 	"compress/gzip"
