@@ -26,7 +26,7 @@ type EventBuffer struct {
 
 func (e *EventBuffer) createTmpFile() {
 	var err error
-	e.File, err = ioutil.TempFile("", "mixpanels3-event-")
+	e.File, err = ioutil.TempFile("", "mixpanels3-event-"+e.Key+"-")
 	if err != nil {
 		panic(err)
 	}
