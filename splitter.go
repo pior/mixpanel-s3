@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"runtime"
+	"sync"
 )
 
 type Event struct {
@@ -37,32 +39,59 @@ func newEvent(name string) *EventBuffer {
 	return &e
 }
 
-type EventPayload struct {
+type EventRecord struct {
 	Event string `json:"event"`
 }
 
-	var payload EventPayload
 func SplitEvents(input io.Reader) (events []*EventBuffer, err error) {
 	var eventsMap = make(map[string]*EventBuffer)
 
+	raw_lines := make(chan []byte, 100)
+	output := make(chan *Event, 100)
+
+	var taskWG sync.WaitGroup
+	for i := 0; i < runtime.NumCPU(); i++ {
+		taskWG.Add(1)
+		go func() {
+			var r EventRecord
+			for raw_line := range raw_lines {
+				err = json.Unmarshal(raw_line, &r)
+				if err != nil {
+					log.Printf("Bad record: %v\n", err)
+					continue
+				}
+				output <- &Event{name: r.Event, payload: raw_line}
+			}
+			taskWG.Done()
+		}()
+	}
+
 	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
-		raw_line := scanner.Bytes()
-		err = json.Unmarshal(raw_line, &payload)
-		if err != nil {
-			log.Printf("Bad record: %v\n", err)
-			continue
-		}
-
-		e, ok := eventsMap[payload.Event]
-		if !ok {
-			e = newEvent(payload.Event)
-			eventsMap[payload.Event] = e
-			events = append(events, e)
-		}
-		e.w.Write(raw_line)
-		e.Length += 1
+		raw_lines <- scanner.Bytes()
 	}
+
+	var writerWG sync.WaitGroup
+	writerWG.Add(1)
+	go func() {
+		for event := range output {
+			e, ok := eventsMap[event.name]
+			if !ok {
+				e = newEvent(event.name)
+				eventsMap[event.name] = e
+				events = append(events, e)
+			}
+			e.w.Write(event.payload)
+			e.w.WriteByte('\n')
+		}
+		writerWG.Done()
+	}()
+
+	close(raw_lines)
+	taskWG.Wait()
+
+	close(output)
+	writerWG.Wait()
 
 	for _, e := range events {
 		e.w.Flush()
