@@ -66,11 +66,6 @@ func SplitEvents(input io.Reader) (events []*EventBuffer, err error) {
 		}()
 	}
 
-	scanner := bufio.NewScanner(input)
-	for scanner.Scan() {
-		raw_lines <- scanner.Bytes()
-	}
-
 	var writerWG sync.WaitGroup
 	writerWG.Add(1)
 	go func() {
@@ -86,6 +81,14 @@ func SplitEvents(input io.Reader) (events []*EventBuffer, err error) {
 		}
 		writerWG.Done()
 	}()
+
+	scanner := bufio.NewScanner(input)
+	for scanner.Scan() {
+		a := scanner.Bytes()
+		b := make([]byte, len(a))
+		copy(b, a)
+		raw_lines <- b
+	}
 
 	close(raw_lines)
 	taskWG.Wait()
