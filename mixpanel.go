@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"crypto/md5"
 	"fmt"
+	"github.com/lafikl/fluent"
 	"io"
-	"net/http"
 	"net/url"
 	"os"
 	"sort"
@@ -48,7 +48,10 @@ func (m *MixpanelAPI) RawEvents(file *os.File, from string, to string) (err erro
 	params.Set("to_date", to)
 	url := m.buildSignedUrl(baseMixpanelDataUrl, params)
 
-	resp, err := http.Get(url)
+	req := fluent.New()
+	req.Get(url).InitialInterval(time.Second * 10)
+	req.Retry(5)
+	resp, err := req.Send()
 	if err != nil {
 		panic(err)
 	}

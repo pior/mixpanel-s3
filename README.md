@@ -9,10 +9,11 @@
 - Upload on S3
 - On the fly Gzip compression
 - Split by events
-
-## TODO 
-
 - Retry download (5 times, wait 60s before retrying)
+
+## Install
+
+    go install github.com/pior/mixpanels3/mixpanel-s3
 
 ## Usage
 
@@ -33,7 +34,8 @@
       --split              Split by event name
       --version            Show application version.
 
-> Note: use the TMPDIR to control where mixpanel-s3 will stage the raw events
+> Note: use the TMPDIR environment variable to control where mixpanel-s3 will
+> stage the raw events
 
 ## Environment Variables
 
