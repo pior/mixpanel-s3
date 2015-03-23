@@ -26,22 +26,22 @@ var (
 	split = kingpin.Flag("split", "Split by event name").Bool()
 )
 
-func eventsUpload(l *mixpanels3.S3Loader, events []*mixpanels3.Event) {
-	tasks := make(chan *mixpanels3.Event)
+func eventsUpload(l *mixpanels3.S3Loader, eventBufs []*mixpanels3.EventBuffer) {
+	tasks := make(chan *mixpanels3.EventBuffer)
 	var wg sync.WaitGroup
 
 	for i := 0; i < 8; i++ {
 		wg.Add(1)
 		go func() {
-			for e := range tasks {
-				uploadFile(l, e.File, e.Key+".gz")
+			for eb := range tasks {
+				uploadFile(l, eb.File, eb.Key+".gz")
 			}
 			wg.Done()
 		}()
 	}
 
-	for _, event := range events {
-		tasks <- event
+	for _, eb := range eventBufs {
+		tasks <- eb
 	}
 	close(tasks)
 	wg.Wait()

@@ -11,14 +11,18 @@ import (
 )
 
 type Event struct {
-	Name   string
-	Key    string
-	Length int
-	File   *os.File
-	w      *bufio.Writer
+	name    string
+	payload []byte
 }
 
-func (e *Event) createTmpFile() {
+type EventBuffer struct {
+	Name string
+	Key  string
+	File *os.File
+	w    *bufio.Writer
+}
+
+func (e *EventBuffer) createTmpFile() {
 	var err error
 	e.File, err = ioutil.TempFile("", "mixpanels3-event-")
 	if err != nil {
@@ -27,8 +31,8 @@ func (e *Event) createTmpFile() {
 	e.w = bufio.NewWriter(e.File)
 }
 
-func newEvent(name string) *Event {
-	e := Event{Name: name, Key: slug.Slug(name), Length: 0}
+func newEvent(name string) *EventBuffer {
+	e := EventBuffer{Name: name, Key: slug.Slug(name)}
 	e.createTmpFile()
 	return &e
 }
@@ -37,9 +41,9 @@ type EventPayload struct {
 	Event string `json:"event"`
 }
 
-func SplitEvents(input io.Reader) (events []*Event, err error) {
 	var payload EventPayload
-	var eventsMap = make(map[string]*Event)
+func SplitEvents(input io.Reader) (events []*EventBuffer, err error) {
+	var eventsMap = make(map[string]*EventBuffer)
 
 	scanner := bufio.NewScanner(input)
 	for scanner.Scan() {
