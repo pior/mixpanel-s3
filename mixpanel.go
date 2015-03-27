@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/lafikl/fluent"
 	"io"
+	"log"
 	"net/url"
 	"os"
 	"sort"
@@ -42,20 +43,25 @@ func (m *MixpanelAPI) buildSignedUrl(baseUrl string, params url.Values) (querySt
 	return fmt.Sprintf("%s?%s", baseUrl, params.Encode())
 }
 
-func (m *MixpanelAPI) RawEvents(file *os.File, from string, to string) (err error) {
+func (m *MixpanelAPI) RawEvents(file *os.File, from string, to string, event string) (err error) {
 	params := url.Values{}
 	params.Set("from_date", from)
 	params.Set("to_date", to)
-	url := m.buildSignedUrl(baseMixpanelDataUrl, params)
+	if event != "" {
+		params.Set("event", fmt.Sprintf("[\"%s\"]", event))
+	}
+	signedUrl := m.buildSignedUrl(baseMixpanelDataUrl, params)
 
+	log.Printf("From: %s\n", signedUrl)
 	req := fluent.New()
-	req.Get(url).InitialInterval(time.Second * 10)
+	req.Get(signedUrl).InitialInterval(time.Second * 10)
 	req.Retry(5)
 	resp, err := req.Send()
 	if err != nil {
 		panic(err)
 	}
 	defer resp.Body.Close()
+
 	if resp.StatusCode != 200 {
 		var b bytes.Buffer
 		io.Copy(&b, resp.Body)
