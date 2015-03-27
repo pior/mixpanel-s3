@@ -8,6 +8,7 @@
 - Download raw events from the Mixpanel data api
 - Upload on S3
 - On the fly Gzip compression
+- Event selection
 - Split by events
 - Retry download (5 times, wait 60s before retrying)
 
@@ -23,10 +24,11 @@
 
     Flags:
       --help               Show help.
-      -f, --from="2015-03-21"  
+      -f, --from="2015-03-25"  
                            Extract from this date
-      -t, --to="2015-03-21"  
+      -t, --to="2015-03-25"  
                            Extract to this date
+      -e, --event=EVENT    Extract only this event
       -k, --key=XXXXXX     Mixpanel api key
       -s, --secret=XXXXXX  Mixpanel secret key
       -b, --bucket=BUCKET  S3 bucket name
@@ -37,8 +39,14 @@
 > Note: use the TMPDIR environment variable to control where mixpanel-s3 will
 > stage the raw events
 
-## Environment Variables
+## Configuration
 
+Mixpanel and AWS credentials can be provided as command line arguments or environment variables
+
+### Environment Variables
+
+- AWS_ACCESS_KEY_ID
+- AWS_SECRET_ACCESS_KEY
 - MIXPANEL_API_KEY
 - MIXPANEL_SECRET_KEY
 - S3_BUCKET
