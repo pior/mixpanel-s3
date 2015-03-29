@@ -52,29 +52,27 @@ func uploadFile(l *S3Loader, f *os.File, key string) (err error) {
 	return
 }
 
-func Run(from string, to string, event string, key string, secret string, bucket string, prefix string, split bool) (err error) {
-	fullprefix := fmt.Sprintf("%s%s_%s_%s/", prefix, key, from, to)
-	s3loader := NewS3Loader(bucket, fullprefix)
+func RunConfig(c *Config) (err error) {
+	s3loader := NewS3Loader(c.Bucket, c.GetEffectiveS3Prefix())
 	err = s3loader.Init()
 	if err != nil {
 		return fmt.Errorf("S3 failure: %s", err)
 	}
 
-	tmpfilename := fmt.Sprintf("mixpanel_%s_%s_%s_", key, from, to)
-	tmpfile, err := ioutil.TempFile("", tmpfilename)
+	tmpfile, err := ioutil.TempFile("", c.GetTmpFilename())
 	if err != nil {
 		return fmt.Errorf("Tmp file failure: %s", err)
 	}
 	defer tmpfile.Close()
 
 	log.Printf("Download from Mixpanel (%s)\n", tmpfile.Name())
-	m := MixpanelAPI{ApiKey: key, ApiSecret: secret}
-	err = m.RawEvents(tmpfile, from, to, event)
+	m := MixpanelAPI{ApiKey: c.Key, ApiSecret: c.Secret}
+	err = m.RawEvents(tmpfile, c.From, c.To, c.Events)
 	if err != nil {
 		return fmt.Errorf("Mixpanel failure: %s", err)
 	}
 
-	if split {
+	if c.Split {
 		log.Printf("Splitting by events")
 		events, err := SplitEvents(tmpfile)
 		if err != nil {

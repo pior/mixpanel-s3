@@ -15,8 +15,8 @@ var (
 		Default(yesterday).String()
 	to = kingpin.Flag("to", "Extract to this date").Short('t').
 		Default(yesterday).String()
-	event = kingpin.Flag("event", "Extract only this event").Short('e').
-		Default("").String()
+	events = kingpin.Flag("event", "Only those events (repeat the flag for multiple events)").
+		Short('e').Default("").Strings()
 
 	key = kingpin.Flag("key", "Mixpanel api key").Short('k').
 		PlaceHolder("XXXXXX").OverrideDefaultFromEnvar("MIXPANEL_API_KEY").
@@ -45,7 +45,17 @@ func main() {
 	kingpin.Version("1.0")
 	kingpin.Parse()
 
-	err := mixpanels3.Run(*from, *to, *event, *key, *secret, *bucket, *prefix,
-		*split)
+	c := &mixpanels3.Config{
+		From:   *from,
+		To:     *to,
+		Events: *events,
+		Key:    *key,
+		Secret: *secret,
+		Bucket: *bucket,
+		Prefix: *prefix,
+		Split:  *split,
+	}
+
+	err := mixpanels3.RunConfig(c)
 	kingpin.FatalIfError(err, "")
 }

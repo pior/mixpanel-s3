@@ -3,6 +3,7 @@ package mixpanels3
 import (
 	"bytes"
 	"crypto/md5"
+	"encoding/json"
 	"fmt"
 	"github.com/lafikl/fluent"
 	"io"
@@ -21,6 +22,7 @@ type MixpanelAPI struct {
 }
 
 func (m *MixpanelAPI) buildSignedUrl(baseUrl string, params url.Values) (queryString string) {
+
 	params.Set("api_key", m.ApiKey)
 	params.Set("expire", fmt.Sprintf("%d", time.Now().Unix()+3600))
 	params.Del("sig")
@@ -43,12 +45,17 @@ func (m *MixpanelAPI) buildSignedUrl(baseUrl string, params url.Values) (querySt
 	return fmt.Sprintf("%s?%s", baseUrl, params.Encode())
 }
 
-func (m *MixpanelAPI) RawEvents(file *os.File, from string, to string, event string) (err error) {
+func (m *MixpanelAPI) RawEvents(file *os.File, from string, to string, events []string) (err error) {
+
 	params := url.Values{}
 	params.Set("from_date", from)
 	params.Set("to_date", to)
-	if event != "" {
-		params.Set("event", fmt.Sprintf("[\"%s\"]", event))
+	if len(events) != 0 {
+		val, err := json.Marshal(events)
+		if err != nil {
+			return fmt.Errorf("Can't format events as json: %s", err)
+		}
+		params.Set("event", string(val))
 	}
 	signedUrl := m.buildSignedUrl(baseMixpanelDataUrl, params)
 
