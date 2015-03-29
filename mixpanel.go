@@ -72,8 +72,7 @@ func (m *MixpanelAPI) RawEvents(file *os.File, from string, to string, events []
 	if resp.StatusCode != 200 {
 		var b bytes.Buffer
 		io.Copy(&b, resp.Body)
-		err = fmt.Errorf("Mixpanel error: %s", b.Bytes())
-		return
+		return fmt.Errorf("Mixpanel error: %s", b.Bytes())
 	}
 
 	_, err = io.Copy(file, resp.Body)

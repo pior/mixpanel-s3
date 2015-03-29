@@ -36,7 +36,7 @@ var (
 func main() {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			fmt.Fprintf(os.Stderr, "Crash: %v\n", err)
 			os.Exit(1)
 		}
 	}()
