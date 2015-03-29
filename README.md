@@ -14,7 +14,7 @@
 
 ## Install
 
-    go install github.com/pior/mixpanels3/mixpanel-s3
+    go install github.com/pior/mixpanel-s3/mixpanel-s3
 
 ## Usage
 
